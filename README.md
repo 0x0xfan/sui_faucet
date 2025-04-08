@@ -1,2 +1,1 @@
-# sui_faucet
-sui,faucet
+sui测试网领水协议脚本
