@@ -1,6 +1,5 @@
 #作者：阿凡    
 #推特：https://x.com/Sync_aFan
-
 import requests
 from typing import Dict, Any, Optional, Tuple, List
 import time
@@ -8,7 +7,6 @@ import random
 import string
 import os
 from tools.log_settings.log import logger
-import json
 
 def get_jwt_token():
     """获取JWT token的函数"""
@@ -34,9 +32,16 @@ def get_jwt_token():
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            data = json.loads(response.text)
-            token = data.get('token')
-            return token
+            # 解析JSON响应
+            response_json = response.json()
+            # 获取token值
+            token = response_json.get("token")
+            if token:
+                logger.info("成功获取JWT token")
+                return token
+            else:
+                logger.error("响应中没有找到token")
+                return None
         else:
             logger.error(f"获取token失败，状态码: {response.status_code}")
             return None
@@ -269,11 +274,17 @@ class SuiFaucet:
         Returns:
             Dict[str, str]: 请求头字典
         """
+        # 获取JWT token
+        jwt_token = get_jwt_token()
+        if not jwt_token:
+            logger.error("获取JWT token失败")
+            return {}
+            
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            "Authorization" : get_jwt_token(),
+            "Authorization": f"Bearer {jwt_token}",  # 添加Bearer前缀
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Content-Type": "application/json",
@@ -576,7 +587,7 @@ def main():
     with open("地址1.txt", "r") as file:
         wallet_addresses = [line.strip() for line in file.readlines()]
     
-    user_token = "11111"  # 替换为实际的nocaptcha token
+    user_token = "你的nocaptcha token"  # 替换为实际的nocaptcha token
     
     # 创建并运行水龙头实例
     faucet = SuiFaucet(wallet_addresses, user_token)
@@ -585,3 +596,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
